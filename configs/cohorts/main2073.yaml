@@ -1,0 +1,32 @@
+name: main2073
+prompt: diagnosis
+
+# Case id is the md5 of the case text with non-letters stripped. Cases are deduplicated by
+# that id, keeping the first occurrence.
+expected_size: 2073
+
+sources:
+  - name: medqa
+    kind: csv
+    path: MedQA_complete_graded_data.csv
+    case_field: question
+    answer_field: answer
+    expected_count: 512
+
+  - name: medmcqa
+    kind: hf
+    path: medmcqa-filtered
+    split: train
+    case_field: case_prompt
+    answer_field: final_diagnosis
+    expected_count: 1259
+
+  # Not redistributed: the Case Records of the Massachusetts General Hospital are
+  # copyright NEJM. Obtain them separately and place the file at this path to rebuild
+  # the cohort; the 302 case ids are recorded in artifacts/rollouts/pool_screen1000.json.
+  - name: nejm_cpc
+    kind: csv
+    path: nejm_cpc_dataset.csv
+    case_field: case_prompt
+    answer_field: final_diagnosis
+    expected_count: 302

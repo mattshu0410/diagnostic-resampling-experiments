@@ -1,0 +1,33 @@
+slug: qwen3.6-27b
+hf_id: Qwen/Qwen3.6-27B
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 64-layer stack.
+layers: [9, 18, 27, 36, 45, 54]
+
+# Matches the checkpoint's generation_config.json and the model card's recommendation for
+# thinking mode on general tasks, whose min_p, presence_penalty and repetition_penalty are the
+# sampler's defaults.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 20
+  seed: 2026
+
+# Thinking mode emits reasoning in <think>...</think> by default; with the prompt also asking
+# for <think> tags, a response carries several blocks and the longest is the chain of thought.
+expected_trace_format: think_longest
+
+# Often states the diagnosis in prose, then rambles into the <answer> tag or hits the token cap
+# before filling it; these read the stated diagnosis when the tag holds none.
+answer_fallbacks: [stated_diagnosis, prose_after_think]
+
+# Markdown outline: bullets and short lines the clinical rules would run together.
+sentence_rules: outline
+
+expected:
+  n_layers: 64
+  hidden_size: 5120

@@ -1,0 +1,26 @@
+# Preliminary read on the five models whose sweep finished, while glm, qwq and gemma still run.
+# `name` stays screen1000 so run directories, the pool and the selection all resolve to the real
+# experiment; only the roster is narrower, so grading and importance skip the unfinished runs.
+name: screen1000
+models:
+  - deepseek-r1-distill-qwen-1.5b
+  - deepseek-r1-distill-llama-8b
+  - huatuogpt-o1-8b
+  - deepseek-r1-distill-qwen-14b
+  - gpt-oss-20b
+solve: resid_srfgw_uniform_N500_a0.8_K6_m10_seed2031_b24
+strata: {}
+cohort: main2073
+pool_size: 1000
+seed: 2026
+core_min: 6
+floor: 40
+min_each: 1
+screen_rollouts: 8
+sweep_rollouts: 20
+max_sentences: 340
+max_new_tokens: 16384
+n_variable: 80
+n_control: 0
+threshold: 0.8
+sizes: [6]

@@ -1,0 +1,37 @@
+slug: ministral-3-14b-reasoning-2512
+hf_id: mistralai/Ministral-3-14B-Reasoning-2512
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 40-layer stack.
+layers: [7, 12, 17, 22, 27, 32]
+
+# The checkpoint's generation_config.json carries no sampling values; the model card
+# recommends a temperature of 1 for most environments and its vLLM examples use this top_p.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 1.0
+  top_p: 0.95
+  seed: 2026
+
+# Its system prompt asks reasoning to run inside [THINK]...[/THINK]; about five responses in
+# six open with [THINK], the rest with a plain <think>, and both close with </think> or nothing
+# ([/THINK] is rare). bracket_think reads from either opener; see utils.traces.
+expected_trace_format: bracket_think
+
+# Often states the diagnosis in prose, then rambles into the <answer> tag or hits the token cap
+# before filling it; these read the stated diagnosis when the tag holds none.
+answer_fallbacks: [stated_diagnosis, prose_after_think]
+
+# Built on the tekken tokenizer: prompts are rendered through mistral_common rather than the
+# checkpoint's Jinja chat template, since a rendered string carries a literal <s> that vLLM
+# would tokenize a second time, doubling the BOS.
+tokenizer_mode: mistral
+
+# Prose with numbered and bulleted lists the clinical rules would run together.
+sentence_rules: outline
+
+expected:
+  n_layers: 40
+  hidden_size: 5120

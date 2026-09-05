@@ -1,0 +1,28 @@
+slug: qwq-32b
+hf_id: Qwen/QwQ-32B
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 64-layer stack.
+layers: [9, 18, 27, 36, 45, 54]
+
+# Matches the checkpoint's generation_config.json.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 0.6
+  top_p: 0.95
+  top_k: 40
+  repetition_penalty: 1.0
+  seed: 2026
+
+# Responses echo the prompt's answer placeholder ahead of the reasoning; extraction anchors on
+# that echo rather than on a <think> tag.
+expected_trace_format: answer_anchored
+
+# Omits the opening <answer>, leaving the diagnosis between two closers.
+answer_fallbacks: [sandwiched]
+
+expected:
+  n_layers: 64
+  hidden_size: 5120

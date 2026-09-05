@@ -1,0 +1,35 @@
+slug: gpt-oss-20b
+hf_id: openai/gpt-oss-20b
+
+# null keeps the checkpoint's native MXFP4 quantization; setting a dtype dequantizes to
+# bfloat16. Requires the environment under envs/mxfp4/.
+dtype: null
+
+# Six layers spaced evenly through the 24-layer stack.
+layers: [5, 8, 11, 14, 17, 20]
+
+# The checkpoint's generation_config.json carries no sampling values; temperature and top_p
+# are the model card's recommended defaults. reasoning_effort is placed in the harmony system
+# message by the chat template.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 1.0
+  top_p: 1.0
+  chat_template_kwargs:
+    reasoning_effort: medium
+
+# Reasoning is the harmony "analysis" channel.
+expected_trace_format: harmony
+
+env: mxfp4
+
+# Mis-nests the closing tag, so the text after the last real opener is the answer.
+answer_fallbacks: [last_opener]
+
+expected:
+  n_layers: 24
+  hidden_size: 2880
+
+# The harmony chat template writes the current date into the system message, so prompts are
+# not byte-identical across generation runs on different days.

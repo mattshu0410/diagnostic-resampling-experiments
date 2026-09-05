@@ -1,0 +1,1 @@
+Here is a case, a predicted diagnosis, and the true diagnosis. How similar are the two diagnoses? Answer a number from 0-10.

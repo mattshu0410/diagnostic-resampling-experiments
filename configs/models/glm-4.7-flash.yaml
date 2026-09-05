@@ -1,0 +1,28 @@
+slug: glm-4.7-flash
+hf_id: zai-org/GLM-4.7-Flash
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 47-layer stack.
+layers: [7, 14, 21, 28, 35, 42]
+
+# The checkpoint's generation_config.json carries only a temperature; the rest are left unset.
+# The template opens a <think> block unless enable_thinking is passed as false.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 1.0
+
+expected_trace_format: think_block
+
+# Names the answer tags while reasoning about the format, so the first opener is not the real
+# one; sometimes opens the answer with <tool_call>answer> instead; and often ends the reasoning
+# and states the diagnosis straight after </think>, with no tags at all.
+answer_fallbacks: [last_opener, tool_call_answer, stated_diagnosis, prose_after_think]
+
+expected:
+  n_layers: 47
+  hidden_size: 2048
+
+# Markdown outlines: a line break is a sentence boundary the clinical rules do not draw.
+sentence_rules: outline

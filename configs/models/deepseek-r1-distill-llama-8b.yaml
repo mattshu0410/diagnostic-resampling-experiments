@@ -1,0 +1,25 @@
+slug: deepseek-r1-distill-llama-8b
+hf_id: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 32-layer stack.
+layers: [6, 10, 14, 18, 22, 26]
+
+# Matches the checkpoint's generation_config.json.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 0.6
+  top_p: 0.95
+  seed: 2026
+
+# Reasoning is emitted inside <think>...</think>.
+expected_trace_format: think_block
+
+# States the diagnosis as prose after </think> when it skips <answer>.
+answer_fallbacks: [prose_after_think]
+
+expected:
+  n_layers: 32
+  hidden_size: 4096

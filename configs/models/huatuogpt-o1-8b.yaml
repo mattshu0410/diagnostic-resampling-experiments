@@ -1,0 +1,26 @@
+slug: huatuogpt-o1-8b
+hf_id: FreedomIntelligence/HuatuoGPT-o1-8B
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 32-layer stack.
+layers: [6, 10, 14, 18, 22, 26]
+
+# Matches the checkpoint's generation_config.json.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 0.2
+  top_p: 0.9
+  repetition_penalty: 1.1
+  seed: 2026
+
+# Responses echo the prompt's answer placeholder ahead of the reasoning; extraction anchors on
+# that echo rather than on a <think> tag.
+expected_trace_format: answer_anchored
+
+answer_fallbacks: []
+
+expected:
+  n_layers: 32
+  hidden_size: 4096

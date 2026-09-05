@@ -1,0 +1,17 @@
+Read the following case presentation and give the most likely diagnosis.
+First, provide your internal reasoning for the diagnosis within the tags <think> ... </think>.
+Then, output the final diagnosis (just the name of the disease/entity) within the tags <answer> ... </answer>.
+
+----------------------------------------
+CASE PRESENTATION
+----------------------------------------
+{case_prompt}
+
+----------------------------------------
+OUTPUT TEMPLATE
+----------------------------------------
+<think>
+...your internal reasoning for the diagnosis...
+</think><answer>
+...the name of the disease/entity...
+</answer>

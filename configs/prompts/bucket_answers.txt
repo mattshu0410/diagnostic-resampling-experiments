@@ -1,0 +1,11 @@
+Here is a case presentation and a list of candidate diagnoses that different models gave for it. Group the diagnoses that name the same clinical entity. Treat differences in capitalisation, spelling, word order, abbreviation and redundant qualifiers as the same entity. Keep a named subtype separate from its parent only when the distinction would change management.
+
+An entry may carry examples in parentheses, as "Name (e.g. variant; variant)". Those examples are diagnoses the entry already covers; judge the entry by the entity they describe. Copy each entry into "members" exactly as it was given, parentheses included, but write "canonical" as a clean diagnosis name with no examples.
+
+Return a JSON object with one key, "buckets". Its value is a list, and each element is an object with exactly two keys: "canonical", a string naming the entity, and "members", a list of the entries from the input that belong to it, copied verbatim. Every entry in the input must appear in exactly one "members" list.
+
+Example input:
+{"input": {"case": "<case presentation>", "diagnoses": ["Diagnosis A", "diagnosis a (DA)", "Diagnosis B (e.g. Diagnosis B1; Diagnosis B2)", "Diagnosis C"]}}
+
+Example output:
+{"buckets": [{"canonical": "Diagnosis A", "members": ["Diagnosis A", "diagnosis a (DA)"]}, {"canonical": "Diagnosis B", "members": ["Diagnosis B (e.g. Diagnosis B1; Diagnosis B2)"]}, {"canonical": "Diagnosis C", "members": ["Diagnosis C"]}]}

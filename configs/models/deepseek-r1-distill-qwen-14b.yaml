@@ -1,0 +1,25 @@
+slug: deepseek-r1-distill-qwen-14b
+hf_id: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 48-layer stack.
+layers: [8, 14, 20, 26, 32, 38]
+
+# Matches the checkpoint's generation_config.json.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 0.6
+  top_p: 0.95
+  seed: 2026
+
+# Reasoning is emitted inside <think>...</think>.
+expected_trace_format: think_block
+
+# Emphasises the diagnosis as **bold** after </think> when it skips <answer>.
+answer_fallbacks: [bold_after_think]
+
+expected:
+  n_layers: 48
+  hidden_size: 5120

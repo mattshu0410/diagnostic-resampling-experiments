@@ -1,0 +1,32 @@
+slug: gemma-4-31b-it
+hf_id: google/gemma-4-31B-it
+
+dtype: bfloat16
+
+# Six layers spaced evenly through the 60-layer stack.
+layers: [9, 18, 27, 36, 45, 54]
+
+# Matches the checkpoint's generation_config.json.
+decoding:
+  max_new_tokens: 32768
+  do_sample: true
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  # The template sets enable_thinking to false by default, so without this the model returns
+  # no reasoning at all.
+  chat_template_kwargs:
+    enable_thinking: true
+
+# Reasoning goes to a named thought channel, while the <think> tags carry only the model's
+# remarks about the output template.
+expected_trace_format: gemma_thought
+
+answer_fallbacks: []
+
+expected:
+  n_layers: 60
+  hidden_size: 5376
+
+# Markdown outlines: a line break is a sentence boundary the clinical rules do not draw.
+sentence_rules: outline

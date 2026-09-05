@@ -1,0 +1,37 @@
+name: screen1000
+# Two models are deliberately absent.
+#
+# ministral-3-14b-reasoning-2512: tokenizer_mode is mistral, and MistralCommonBackend cannot
+# return character offsets, so sentences cannot be tied to token spans. The checkpoint's
+# tokenizer.json gives different token ids from the engine's, so it is not a safe substitute.
+#
+# qwen3.6-27b: it quotes the literal <think> tags back to itself while narrating its output
+# format, so extract_reasoning returns a cleaned string that is no longer a verbatim slice and
+# prepare_trace refuses 28% of its cases. The sentences and spans are sound - the pickle holds
+# all 2073 cases with zero indexed mismatches - but recovering them needs a change to the
+# verbatim gate, which is out of scope before the deadline.
+models:
+  - deepseek-r1-distill-qwen-1.5b
+  - deepseek-r1-distill-llama-8b
+  - huatuogpt-o1-8b
+  - deepseek-r1-distill-qwen-14b
+  - gpt-oss-20b
+  - glm-4.7-flash
+  - gemma-4-31b-it
+  - qwq-32b
+solve: resid_srfgw_uniform_N500_a0.8_K6_m10_seed2031_b24
+strata: {}
+cohort: main2073
+pool_size: 1000
+seed: 2026
+screen_rollouts: 8
+sweep_rollouts: 20
+# 1000 rather than 340: the cap exists because sweep cost scales with boundaries, but at 340
+# it dropped 38 glm and 15 gemma traces of 343-951 sentences, and length is not independent of
+# how a model reasons - the long traces are the markdown-outline ones. Costed at ~78 GPU-hours.
+max_sentences: 1000
+max_new_tokens: 16384
+n_variable: 80
+n_control: 0
+threshold: 0.8
+sizes: [6]
