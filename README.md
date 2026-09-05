@@ -193,5 +193,3 @@ carry no case text from any source: only the models' own reasoning sentences and
 
 **MedQA and MedMCQA.** Redistributed under `datasets/` in the filtered form used here. See the
 original releases for their terms.
-
-**Code.** TODO: choose a licence.
