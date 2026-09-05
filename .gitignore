@@ -1,0 +1,12 @@
+# Note: artifacts/, analysis/*/out/ and datasets/ are deliberately TRACKED here. They are
+# the published data the paper's analysis reproduces from, and they are what makes this
+# repository useful. Do not copy the ignore rules from the development repository, which
+# excludes all three.
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv*/
+.env
+.DS_Store
