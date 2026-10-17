@@ -35,6 +35,7 @@ from dctax.rollouts import store
 from dctax.utils import llm
 
 BUCKET_PROMPT = "bucket_answers"
+ASSIGN_PROMPT = "assign_answers"
 
 #: In-flight judge requests. Grading is the longest stage after a sweep and sits between the
 #: rollouts existing and any result existing, so it runs wider than the library default.
@@ -76,6 +77,19 @@ class AnswerBuckets(BaseModel):
     """Every candidate diagnosis for a case, grouped by the entity it names."""
 
     buckets: list[Bucket]
+
+
+class Assignment(BaseModel):
+    """One candidate diagnosis and the listed entity it names, or "" for none."""
+
+    answer: str
+    entity: str
+
+
+class AnswerAssignments(BaseModel):
+    """Each candidate diagnosis matched to one of a case's existing entities."""
+
+    assignments: list[Assignment]
 
 
 def _assign(candidates: Sequence[str], reply: AnswerBuckets | None) -> dict[str, str]:
@@ -224,6 +238,47 @@ def _collapse(
         previous = total
 
     return label
+
+
+def assign_answers(
+    cases: Sequence[str],
+    contexts: dict[str, str],
+    entities: dict[str, dict[str, list[str]]],
+    answers: dict[str, Sequence[str]],
+    *,
+    llm_cfg: llm.LLMConfig | None = None,
+) -> dict[str, dict[str, str]]:
+    """The existing entity each answer names, per case; an answer naming none is left out.
+
+    Unlike `_collapse` the entities stay fixed: an answer joins one or joins nothing, so new
+    answers cannot merge or rename the entities older answers were grouped into. `entities`
+    maps each case's canonical names to the answers they already cover, shown as examples.
+    """
+    work = []
+    for case in cases:
+        shown = {_shown(name, members): name for name, members in entities[case].items()}
+        listed = list(shown)
+        # A reply may copy the entity with or without its examples; accept either.
+        shown |= {name: name for name in entities[case]}
+        pending = sorted(answers[case])
+        for start in range(0, len(pending), BATCH):
+            work.append((case, pending[start : start + BATCH], listed, shown))
+
+    replies = llm.map_structured(
+        [{"case": contexts[case], "entities": listed, "diagnoses": batch}
+         for case, batch, listed, _ in work],
+        system=load_prompt(ASSIGN_PROMPT),
+        schema=AnswerAssignments,
+        cfg=llm_cfg,
+    )
+    assigned: dict[str, dict[str, str]] = {case: {} for case in cases}
+    for (case, batch, _, shown), reply in zip(work, replies):
+        wanted = set(batch)
+        for item in reply.assignments if reply else []:
+            answer, entity = item.answer.strip(), item.entity.strip()
+            if answer in wanted and entity in shown:
+                assigned[case].setdefault(answer, shown[entity])
+    return assigned
 
 
 def bucket_answers(
@@ -385,6 +440,73 @@ def grade_run(
         entities = len({(r["case_id"], r["canonical"]) for r in rows})
         print(f"{len(rows):,} answers -> {entities:,} entities, {graded:,} graded -> {out.name}",
               flush=True)
+    return out
+
+
+def grade_forced(
+    runs: Sequence[str],
+    records: dict[str, dict],
+    *,
+    grades: Path,
+    out: Path,
+    llm_cfg: llm.LLMConfig | None = None,
+    verbose: bool = True,
+) -> Path:
+    """Entity for every distinct valid forced answer, in the entities `grades` already holds.
+
+    An answer the rollouts also gave keeps its entity. The judge assigns any other to one of
+    the case's existing entities, and those fitting none are grouped among themselves as
+    `grade_run` groups, so every valid answer gets an entity. `grades` is read, never written.
+    """
+    llm_cfg = llm_cfg or llm.LLMConfig(concurrency=CONCURRENCY)
+    counts: dict[str, dict[str, int]] = {}
+    for run in runs:
+        table = pq.read_table(
+            store.run_dir(run) / "forced_answers.parquet",
+            columns=["case_id", "raw_answer", "valid"],
+        ).to_pylist()
+        for row in table:
+            if row["valid"]:
+                case = counts.setdefault(row["case_id"], {})
+                answer = row["raw_answer"].strip()
+                case[answer] = case.get(answer, 0) + 1
+
+    known = {key: row["canonical"] for key, row in load_grades(grades).items()}
+    cases = [c for c in sorted(counts) if c in records]
+    contexts = {c: case_text(records[c].get("question", "")) for c in cases}
+    entities: dict[str, dict[str, list[str]]] = {c: {} for c in cases}
+    for (case, answer), name in known.items():
+        if case in entities:
+            entities[case].setdefault(name, []).append(answer)
+
+    label = {c: {a: known[c, a] for a in counts[c] if (c, a) in known} for c in cases}
+    pending = {c: [a for a in counts[c] if a not in label[c]] for c in cases}
+    if verbose:
+        print(f"{sum(len(v) for v in counts.values()):,} distinct forced answers over "
+              f"{len(cases)} cases, {sum(len(v) for v in pending.values()):,} new to the "
+              f"rollout grades", flush=True)
+    for case, found in assign_answers(cases, contexts, entities, pending, llm_cfg=llm_cfg).items():
+        label[case].update(found)
+    leftover = {c: [a for a in pending[c] if a not in label[c]] for c in cases}
+    if verbose:
+        print(f"  {sum(len(v) for v in leftover.values()):,} fit no existing entity; grouping",
+              flush=True)
+    grouped = _collapse([c for c in cases if leftover[c]], contexts, leftover,
+                        llm_cfg=llm_cfg, verbose=verbose)
+    for case, found in grouped.items():
+        label[case].update(found)
+
+    rows = [
+        {"case_id": c, "raw_answer": a, "canonical": name, "n_rollouts": counts[c][a]}
+        for c in cases
+        for a, name in label[c].items()
+    ]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    temporary = out.with_suffix(".parquet.tmp")
+    pq.write_table(pa.Table.from_pylist(rows, schema=GRADE_SCHEMA), temporary, compression="zstd")
+    temporary.replace(out)
+    if verbose:
+        print(f"{len(rows):,} forced answers -> {out.name}", flush=True)
     return out
 
 

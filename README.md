@@ -43,6 +43,7 @@ src/dctax/
 analysis/
   1_convergence/       where in a trace the answer distribution settles
   2_sentence_effects/  which sentences move it, and what follows commitment
+  3_forced_answers/    what the model would answer, and name, around commitment
 datasets/       MedQA and MedMCQA, filtered to free-response diagnostic cases
 artifacts/
   rollouts/     per-run answers and traces, and the shared judgements
@@ -78,6 +79,7 @@ python analysis/1_convergence/tvd.py               --config screen1000
 python analysis/1_convergence/delta_sweep.py       --config screen1000
 python analysis/2_sentence_effects/diagnosis_mentions.py --config screen1000
 python analysis/2_sentence_effects/tvd_drop.py     --config screen1000
+python analysis/3_forced_answers/forced_answer.py  --config screen1000
 ```
 
 Artifacts are read from `artifacts/` by default; set `DCTAX_DATA_ROOT` to read them elsewhere.
@@ -173,7 +175,19 @@ Answers are grouped before they are scored, so two phrasings of one diagnosis ca
 side of the correctness threshold. Grouping pools every model's answers for a case, so an entity
 means the same thing in each model's distribution.
 
-### 6. Analysis
+### 6. Forced answers
+
+```bash
+dctax force        --config screen1000 --model <slug>
+dctax grade-forced --config screen1000
+```
+
+From every sweep boundary, the model is made to answer at once: the prefix is followed by its
+own handoff from reasoning to answer, and 20 answers of up to 64 tokens are sampled. Answers are
+read and validated as rollouts are, then placed in the answer entities from grading, which they
+do not change.
+
+### 7. Analysis
 
 See [Reproducing the main results](#reproducing-the-main-results).
 

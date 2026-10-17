@@ -8,6 +8,8 @@
     dctax select         --config <name>
     dctax grade-rollouts --config <name> --stage screen|sweep
     dctax importance     --config <name>
+    dctax force          --config <name> --model <slug>
+    dctax grade-forced   --config <name>
 
 Resampling runs in that order: draw one pool shared by every model, screen it at boundary 0,
 grade the answers, select cases, sweep every boundary, then score and grade again before
@@ -27,6 +29,7 @@ from pathlib import Path
 from dctax import config
 from dctax.data import cohort as cohorts
 from dctax.generate import responses as generation
+from dctax.rollouts import force as forcing
 from dctax.rollouts import generate as resampling
 from dctax.rollouts import grade as grading
 from dctax.rollouts import importance as scoring
@@ -204,6 +207,25 @@ def _importance(args: argparse.Namespace) -> int:
     return 0
 
 
+def _force(args: argparse.Namespace) -> int:
+    forcing.run(config.load_resample(args.config), args.model)
+    return 0
+
+
+def _grade_forced(args: argparse.Namespace) -> int:
+    experiment = config.load_resample(args.config)
+    records = {r["pmcid"]: r for r in generation.load_existing(
+        generation.responses_path(experiment.models[0]))}
+    out = grading.grade_forced(
+        [experiment.sweep_run(slug) for slug in experiment.models], records,
+        grades=_grades_path(experiment),
+        out=config.data_root() / "rollouts" / f"grades_{experiment.name}_forced.parquet",
+        llm_cfg=llm.LLMConfig(concurrency=args.concurrency),
+    )
+    print(f"forced grades -> {out}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="dctax")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -276,6 +298,20 @@ def main(argv: list[str] | None = None) -> int:
              "median replacement similarity, or a number for a fixed cut",
     )
     importance_cmd.set_defaults(func=_importance)
+
+    force_cmd = sub.add_parser("force", help="force an answer at every boundary of the sweep")
+    force_cmd.add_argument("--config", required=True, help="under configs/resampling/")
+    force_cmd.add_argument("--model", required=True, help="model slug under configs/models/")
+    force_cmd.set_defaults(func=_force)
+
+    grade_forced_cmd = sub.add_parser(
+        "grade-forced", help="place every forced answer in the sweep's answer entities"
+    )
+    grade_forced_cmd.add_argument("--config", required=True)
+    grade_forced_cmd.add_argument(
+        "--concurrency", type=int, default=grading.CONCURRENCY, help="in-flight judge requests"
+    )
+    grade_forced_cmd.set_defaults(func=_grade_forced)
 
 
     args = parser.parse_args(argv)

@@ -1,0 +1,11 @@
+Here is a case presentation, the clinical entities that other answers for it have already been grouped into, and a list of new candidate diagnoses. For each candidate, give the entity it names, judged as the grouping was: differences in capitalisation, spelling, word order, abbreviation and redundant qualifiers do not make a different entity, and a named subtype is separate from its parent only when the distinction would change management. If a candidate names none of the entities, give an empty string.
+
+An entity may carry examples in parentheses, as "Name (e.g. variant; variant)". Those examples are answers the entity already covers. Copy the entity exactly as it was given, parentheses included.
+
+Return a JSON object with one key, "assignments". Its value is a list with one element per candidate, each an object with exactly two keys: "answer", the candidate copied verbatim, and "entity", the matching entity copied verbatim or "".
+
+Example input:
+{"input": {"case": "<case presentation>", "entities": ["Diagnosis A (e.g. diagnosis a; DA)", "Diagnosis B"], "diagnoses": ["Diagnosis A, acute", "Diagnosis C"]}}
+
+Example output:
+{"assignments": [{"answer": "Diagnosis A, acute", "entity": "Diagnosis A (e.g. diagnosis a; DA)"}, {"answer": "Diagnosis C", "entity": ""}]}
